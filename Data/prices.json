@@ -1,0 +1,57 @@
+{
+  "categories": [
+    {
+      "key": "netMelli",
+      "title": "سرویس نت ملی",
+      "desc": "سرویس قابل استفاده در شرایط محدودیت یا اختلال شدید اینترنت",
+      "averagePerGB": 39000
+    },
+    {
+      "key": "tunnel",
+      "title": "سرویس تانل",
+      "desc": "سرویس مبتنی بر تونل با پایداری بالاتر نسبت به مستقیم",
+      "averagePerGB": 85000
+    },
+    {
+      "key": "direct",
+      "title": "سرویس مستقیم",
+      "desc": "کانفیگ مستقیم بدون تونل؛ وابسته‌تر به وضعیت اپراتور و مسیر",
+      "averagePerGB": 45000
+    }
+  ],
+  "sellers": [
+    {
+      "seller": "فروشنده نمونه ۱",
+      "telegram": "@seller_one",
+      "netMelli": 39000,
+      "tunnel": 85000,
+      "direct": 45000,
+      "updatedAt": "۱۴۰۵/۰۳/۱۳",
+      "status": "درحال بررسی",
+      "score": 78,
+      "note": "داده نمونه برای تست قالب"
+    },
+    {
+      "seller": "فروشنده نمونه ۲",
+      "telegram": "@seller_two",
+      "netMelli": 42000,
+      "tunnel": 79000,
+      "direct": 39000,
+      "updatedAt": "۱۴۰۵/۰۳/۱۳",
+      "status": "تأیید اولیه",
+      "score": 84,
+      "note": "قیمت‌ها قابل ویرایش از فایل JSON"
+    },
+    {
+      "seller": "فروشنده نمونه ۳",
+      "telegram": "@seller_three",
+      "netMelli": 37000,
+      "tunnel": 92000,
+      "direct": 49000,
+      "updatedAt": "۱۴۰۵/۰۳/۱۲",
+      "status": "نیازمند تأیید",
+      "score": 65,
+      "note": "برای نسخه نهایی به دیتابیس وصل شود"
+    }
+  ]
+}
