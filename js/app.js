@@ -147,12 +147,42 @@ function setupCalculator(data) {
   calc();
 }
 
+function renderMarketChart(data) {
+  const chart = document.getElementById("marketChart");
+  if (!chart) return;
+
+  const categories = data.categories && data.categories.length
+    ? data.categories
+    : buildCategories(data.sellers || []);
+
+  if (!categories.length) {
+    chart.innerHTML = `<div class="muted">هنوز داده‌ای برای رسم نمودار وجود ندارد.</div>`;
+    return;
+  }
+
+  const max = Math.max(...categories.map(x => Number(x.averagePerGB || 0)), 1);
+
+  chart.innerHTML = categories.map(c => {
+    const value = Number(c.averagePerGB || 0);
+    const h = Math.max((value / max) * 220, value > 0 ? 18 : 4);
+
+    return `
+      <div style="flex:1;text-align:center;min-width:0">
+        <div style="height:${h}px;background:linear-gradient(180deg,#23e2ff,#2f8cff);border-radius:16px 16px 0 0;margin-bottom:10px;box-shadow:0 18px 45px rgba(47,140,255,.22)"></div>
+        <div style="font-weight:900">${value.toLocaleString("fa-IR")} تومان</div>
+        <div style="opacity:.75;font-size:13px;margin-top:6px">${c.title}</div>
+      </div>
+    `;
+  }).join("");
+}
+
 async function render() {
   const data = await getData();
   renderCategoryCards(data);
   renderPrices(data);
   renderSellers(data);
   setupCalculator(data);
+  renderMarketChart(data);
 }
 
 render();
