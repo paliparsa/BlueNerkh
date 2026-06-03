@@ -77,6 +77,33 @@ function resetForm() {
   $("sellerId").value = "";
 }
 
+
+function settingsData() {
+  return {
+    hero_title: $("hero_title")?.value.trim() || "",
+    hero_subtitle: $("hero_subtitle")?.value.trim() || "",
+    site_notice: $("site_notice")?.value.trim() || "",
+    telegram_support: $("telegram_support")?.value.trim() || "",
+    footer_text: $("footer_text")?.value.trim() || ""
+  };
+}
+
+function fillSettings(settings) {
+  ["hero_title", "hero_subtitle", "site_notice", "telegram_support", "footer_text"].forEach(key => {
+    const el = $(key);
+    if (el) el.value = settings[key] || "";
+  });
+}
+
+async function loadSettings() {
+  try {
+    const settings = await api("/admin/settings");
+    fillSettings(settings);
+  } catch (e) {
+    console.warn("Settings load failed", e);
+  }
+}
+
 let sellersCache = [];
 
 async function loadSellers() {
@@ -119,6 +146,7 @@ async function connect() {
   try {
     await api("/admin/check");
     status("اتصال ادمین برقرار شد.", "success");
+    await loadSettings();
     await loadSellers();
     await loadReports();
   } catch (e) {
@@ -152,6 +180,24 @@ $("sellerForm").addEventListener("submit", async (e) => {
 });
 
 $("resetForm").addEventListener("click", resetForm);
+
+const settingsForm = $("settingsForm");
+if (settingsForm) {
+  settingsForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    try {
+      await api("/admin/settings", {
+        method: "POST",
+        body: JSON.stringify(settingsData())
+      });
+      status("تنظیمات سایت ذخیره شد.", "success");
+      await loadSettings();
+    } catch (err) {
+      status(err.message, "error");
+    }
+  });
+}
+
 
 $("adminSellers").addEventListener("click", async (e) => {
   const editId = e.target.getAttribute("data-edit");

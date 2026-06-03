@@ -54,6 +54,45 @@ function buildCategories(sellers) {
   ];
 }
 
+
+async function getSettings() {
+  const apiUrl = window.BLUENERKH_API_URL;
+  const hasRealApi = apiUrl && !apiUrl.includes("YOUR-WORKER-URL");
+  if (!hasRealApi) return {};
+
+  try {
+    const res = await fetch(apiUrl.replace(/\/$/, "") + "/settings", { cache: "no-store" });
+    if (!res.ok) return {};
+    return await res.json();
+  } catch (error) {
+    console.warn("BlueNerkh settings failed.", error);
+    return {};
+  }
+}
+
+function applySettings(settings) {
+  const pairs = {
+    hero_title: "[data-setting='hero_title']",
+    hero_subtitle: "[data-setting='hero_subtitle']",
+    site_notice: "[data-setting='site_notice']",
+    footer_text: "[data-setting='footer_text']"
+  };
+
+  Object.entries(pairs).forEach(([key, selector]) => {
+    document.querySelectorAll(selector).forEach(el => {
+      if (settings[key]) el.textContent = settings[key];
+    });
+  });
+
+  document.querySelectorAll("[data-setting-link='telegram_support']").forEach(el => {
+    const tg = settings.telegram_support || "";
+    if (!tg) return;
+    const username = tg.replace(/^@/, "").trim();
+    el.textContent = tg.startsWith("@") ? tg : `@${tg}`;
+    el.href = `https://t.me/${username}`;
+  });
+}
+
 async function getData() {
   const apiUrl = window.BLUENERKH_API_URL;
   const hasRealApi = apiUrl && !apiUrl.includes("YOUR-WORKER-URL");
@@ -177,7 +216,8 @@ function renderMarketChart(data) {
 }
 
 async function render() {
-  const data = await getData();
+  const [data, settings] = await Promise.all([getData(), getSettings()]);
+  applySettings(settings);
   renderCategoryCards(data);
   renderPrices(data);
   renderSellers(data);
