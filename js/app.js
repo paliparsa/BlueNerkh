@@ -209,6 +209,86 @@ function setupFairPrice(data) {
   input.addEventListener("keydown", e => { if (e.key === "Enter") check(); });
 }
 
+
+function stateClass(status) {
+  if (status === "cheap") return "state-cheap";
+  if (status === "expensive") return "state-expensive";
+  if (status === "normal") return "state-normal";
+  return "muted";
+}
+
+function stateText(item) {
+  if (!item || item.status === "unknown") return "داده تاریخی کافی نیست";
+  const sign = item.change_percent > 0 ? "+" : "";
+  return `${sign}${String(item.change_percent).replace(".", "٫")}٪ نسبت به میانگین ۳۰ روزه`;
+}
+
+function renderMarketState(data) {
+  const el = document.getElementById("marketState");
+  if (!el) return;
+  const states = data.stats.market_state || {};
+  const items = [
+    { key: "national", title: "نت ملی", state: states.national },
+    { key: "tunnel", title: "تانل", state: states.tunnel },
+    { key: "direct", title: "مستقیم", state: states.direct }
+  ];
+  el.innerHTML = items.map(x => `
+    <div class="state-card">
+      <div class="muted">${x.title}</div>
+      <div class="state-title ${stateClass(x.state?.status)}">${x.state?.label || "داده ناکافی"}</div>
+      <p class="muted">${stateText(x.state)}</p>
+    </div>
+  `).join("");
+}
+
+function renderHistoryTrend(data) {
+  const el = document.getElementById("historyTrend");
+  if (!el) return;
+
+  const history = data.stats.history || {};
+  const points = history.points || [];
+  const av = history.historyAverages || {};
+
+  if (!points.length) {
+    el.innerHTML = `<div class="trend-card muted">هنوز داده تاریخی کافی نیست. با چند بار ویرایش قیمت‌ها در ادمین، price_history پر می‌شود.</div>`;
+    return;
+  }
+
+  const services = [
+    { key: "national_avg", title: "نت ملی", avg30: av.national_avg_30d || 0 },
+    { key: "tunnel_avg", title: "تانل", avg30: av.tunnel_avg_30d || 0 },
+    { key: "direct_avg", title: "مستقیم", avg30: av.direct_avg_30d || 0 }
+  ];
+
+  el.innerHTML = services.map(service => {
+    const vals = points.map(p => Number(p[service.key] || 0)).filter(Boolean);
+    const max = Math.max(...vals, service.avg30 || 1);
+    const latest = vals.length ? vals[vals.length - 1] : 0;
+    const rows = points.slice(-8).map(p => {
+      const val = Number(p[service.key] || 0);
+      const w = max ? Math.max((val / max) * 100, val ? 4 : 0) : 0;
+      return `
+        <div class="history-row">
+          <span class="muted">${p.day.slice(5)}</span>
+          <div class="history-track"><div class="history-fill" style="width:${w}%"></div></div>
+          <span style="text-align:left">${val ? toman(val) : "—"}</span>
+        </div>
+      `;
+    }).join("");
+
+    return `
+      <div class="trend-card">
+        <h3>${service.title}</h3>
+        <div class="history-meta">
+          <span class="pill">۳۰ روزه: ${toman(service.avg30)}</span>
+          <span class="pill">آخرین: ${latest ? toman(latest) : "—"}</span>
+        </div>
+        <div class="history-chart">${rows}</div>
+      </div>
+    `;
+  }).join("");
+}
+
 async function render() {
   const [data, settings] = await Promise.all([getData(), getSettings()]);
   applySettings(settings);
@@ -216,6 +296,8 @@ async function render() {
   renderMarketChart(data);
   renderIndexTable(data);
   renderStats(data);
+  renderMarketState(data);
+  renderHistoryTrend(data);
   renderPublicSellers(data);
   setupFairPrice(data);
 }
