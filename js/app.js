@@ -1,3 +1,4 @@
+
 const FALLBACK_JSON_URL = "data/prices.json";
 
 function toman(value) {
@@ -10,10 +11,27 @@ function normalizeDate(value) {
   return String(value).replace("T", " ").slice(0, 16);
 }
 
+function avg(nums) {
+  const arr = nums.map(Number).filter(x => x > 0);
+  if (!arr.length) return 0;
+  return Math.round(arr.reduce((a,b)=>a+b,0)/arr.length);
+}
+
+function minv(nums) {
+  const arr = nums.map(Number).filter(x => x > 0);
+  return arr.length ? Math.min(...arr) : 0;
+}
+
+function maxv(nums) {
+  const arr = nums.map(Number).filter(x => x > 0);
+  return arr.length ? Math.max(...arr) : 0;
+}
+
 function mapApiSeller(row) {
   return {
+    id: row.id,
     seller: row.seller || row.name || "فروشنده بدون نام",
-    telegram: row.telegram || "-",
+    telegram: row.telegram || "",
     website: row.website || "",
     netMelli: Number(row.netMelli ?? row.national_price ?? row.nationalPrice ?? 0),
     tunnel: Number(row.tunnel ?? row.tunnel_price ?? row.tunnelPrice ?? 0),
@@ -21,53 +39,33 @@ function mapApiSeller(row) {
     updatedAt: normalizeDate(row.updated_at || row.updatedAt),
     status: Number(row.verified || 0) ? "تأیید شده" : "درحال بررسی",
     score: row.score ?? (Number(row.verified || 0) ? 90 : 60),
-    note: row.note || (Number(row.verified || 0) ? "فروشنده تأیید شده" : "در انتظار بررسی")
+    note: row.note || ""
   };
 }
 
-function average(list, key) {
-  const nums = list.map(x => Number(x[key] || 0)).filter(Boolean);
-  if (!nums.length) return 0;
-  return Math.round(nums.reduce((a, b) => a + b, 0) / nums.length);
+function buildStats(sellers) {
+  const direct = sellers.map(s => s.direct);
+  const tunnel = sellers.map(s => s.tunnel);
+  const national = sellers.map(s => s.netMelli);
+  return {
+    seller_count: sellers.length,
+    services: [
+      { key:"national", title:"نت ملی", desc:"میانگین سرویس‌های قابل استفاده در محدودیت شدید", avg:avg(national), min:minv(national), max:maxv(national), count:national.filter(Boolean).length },
+      { key:"tunnel", title:"تانل", desc:"میانگین سرویس‌های تونل‌شده", avg:avg(tunnel), min:minv(tunnel), max:maxv(tunnel), count:tunnel.filter(Boolean).length },
+      { key:"direct", title:"مستقیم", desc:"میانگین کانفیگ مستقیم", avg:avg(direct), min:minv(direct), max:maxv(direct), count:direct.filter(Boolean).length }
+    ]
+  };
 }
-
-function buildCategories(sellers) {
-  return [
-    {
-      key: "netMelli",
-      title: "سرویس نت ملی",
-      desc: "میانگین قیمت هر گیگ برای سرویس‌های قابل استفاده در محدودیت شدید",
-      averagePerGB: average(sellers, "netMelli")
-    },
-    {
-      key: "tunnel",
-      title: "سرویس تانل",
-      desc: "میانگین قیمت هر گیگ برای سرویس‌های تونل‌شده",
-      averagePerGB: average(sellers, "tunnel")
-    },
-    {
-      key: "direct",
-      title: "سرویس مستقیم",
-      desc: "میانگین قیمت هر گیگ برای کانفیگ مستقیم",
-      averagePerGB: average(sellers, "direct")
-    }
-  ];
-}
-
 
 async function getSettings() {
   const apiUrl = window.BLUENERKH_API_URL;
   const hasRealApi = apiUrl && !apiUrl.includes("YOUR-WORKER-URL");
   if (!hasRealApi) return {};
-
   try {
-    const res = await fetch(apiUrl.replace(/\/$/, "") + "/settings", { cache: "no-store" });
+    const res = await fetch(apiUrl.replace(/\/$/, "") + "/settings", { cache:"no-store" });
     if (!res.ok) return {};
     return await res.json();
-  } catch (error) {
-    console.warn("BlueNerkh settings failed.", error);
-    return {};
-  }
+  } catch { return {}; }
 }
 
 function applySettings(settings) {
@@ -77,16 +75,13 @@ function applySettings(settings) {
     site_notice: "[data-setting='site_notice']",
     footer_text: "[data-setting='footer_text']"
   };
-
   Object.entries(pairs).forEach(([key, selector]) => {
     document.querySelectorAll(selector).forEach(el => {
       if (settings[key]) el.textContent = settings[key];
     });
   });
-
   document.querySelectorAll("[data-setting-link='telegram_support']").forEach(el => {
-    const tg = settings.telegram_support || "";
-    if (!tg) return;
+    const tg = settings.telegram_support || "@Support";
     const username = tg.replace(/^@/, "").trim();
     el.textContent = tg.startsWith("@") ? tg : `@${tg}`;
     el.href = `https://t.me/${username}`;
@@ -96,133 +91,132 @@ function applySettings(settings) {
 async function getData() {
   const apiUrl = window.BLUENERKH_API_URL;
   const hasRealApi = apiUrl && !apiUrl.includes("YOUR-WORKER-URL");
-
   if (hasRealApi) {
     try {
-      const res = await fetch(apiUrl, { cache: "no-store" });
-      if (!res.ok) throw new Error("API response was not OK");
+      const res = await fetch(apiUrl.replace(/\/$/, "") + "/public", { cache:"no-store" });
+      if (!res.ok) throw new Error("API failed");
       const payload = await res.json();
-      const rows = Array.isArray(payload) ? payload : (payload.sellers || payload.results || []);
-      const sellers = rows.map(mapApiSeller);
-      return { categories: buildCategories(sellers), sellers };
-    } catch (error) {
-      console.warn("BlueNerkh API failed. Falling back to local JSON.", error);
+      const sellers = (payload.sellers || []).map(mapApiSeller);
+      return { sellers, stats: payload.stats || buildStats(sellers) };
+    } catch (err) {
+      console.warn("API failed; using fallback", err);
     }
   }
-
   try {
-    return await (await fetch(FALLBACK_JSON_URL, { cache: "no-store" })).json();
-  } catch (error) {
-    console.error("Local JSON failed too.", error);
-    return { categories: [], sellers: [] };
+    const local = await (await fetch(FALLBACK_JSON_URL, { cache:"no-store" })).json();
+    const sellers = (local.sellers || []).map(mapApiSeller);
+    return { sellers, stats: buildStats(sellers) };
+  } catch {
+    return { sellers: [], stats: buildStats([]) };
   }
 }
 
-function renderCategoryCards(data) {
-  document.querySelectorAll("[data-cat-cards]").forEach(el => {
-    el.innerHTML = data.categories.map(c => `
+function renderMarketCards(data) {
+  document.querySelectorAll("[data-market-cards]").forEach(el => {
+    el.innerHTML = data.stats.services.map(s => `
       <div class="card">
-        <h3>${c.title}</h3>
-        <p class="muted">${c.desc}</p>
-        <div class="price">${toman(c.averagePerGB)}</div>
-        <span class="pill">میانگین هر گیگ</span>
+        <h3>${s.title}</h3>
+        <p class="muted">${s.desc}</p>
+        <div class="price">${toman(s.avg)}</div>
+        <span class="pill">میانگین بازار</span>
       </div>
     `).join("");
   });
-}
-
-function renderPrices(data) {
-  document.querySelectorAll("[data-prices]").forEach(el => {
-    if (!data.sellers.length) {
-      el.innerHTML = `<tr><td colspan="5">هنوز داده‌ای ثبت نشده است.</td></tr>`;
-      return;
-    }
-    el.innerHTML = data.sellers.map(s => `
-      <tr>
-        <td><b>${s.seller}</b><br><span class="muted">${s.note || "-"}</span></td>
-        <td>${toman(s.netMelli)}</td>
-        <td>${toman(s.tunnel)}</td>
-        <td>${toman(s.direct)}</td>
-        <td><span class="pill">${s.updatedAt || "—"}</span></td>
-      </tr>
-    `).join("");
-  });
-}
-
-function renderSellers(data) {
-  document.querySelectorAll("[data-sellers]").forEach(el => {
-    if (!data.sellers.length) {
-      el.innerHTML = `<tr><td colspan="4">هنوز فروشنده‌ای ثبت نشده است.</td></tr>`;
-      return;
-    }
-    el.innerHTML = data.sellers.map(s => `
-      <tr>
-        <td><b>${s.seller}</b><br><span class="muted">${s.telegram || "-"}</span></td>
-        <td>${s.status || "درحال بررسی"}</td>
-        <td>${s.score || 0}/100</td>
-        <td>${s.note || "-"}</td>
-      </tr>
-    `).join("");
-  });
-}
-
-function setupCalculator(data) {
-  const sel = document.querySelector("#serviceType");
-  const gb = document.querySelector("#gb");
-  const result = document.querySelector("#calcResult");
-  if (!sel || !gb || !result) return;
-
-  sel.innerHTML = data.categories.map(c => `<option value="${c.key}">${c.title}</option>`).join("");
-
-  const calc = () => {
-    const amount = Number(gb.value || 0);
-    const key = sel.value;
-    const cat = data.categories.find(c => c.key === key);
-    result.textContent = toman(amount * (cat ? Number(cat.averagePerGB || 0) : 0));
-  };
-
-  gb.addEventListener("input", calc);
-  sel.addEventListener("change", calc);
-  calc();
 }
 
 function renderMarketChart(data) {
   const chart = document.getElementById("marketChart");
   if (!chart) return;
-
-  const categories = data.categories && data.categories.length
-    ? data.categories
-    : buildCategories(data.sellers || []);
-
-  if (!categories.length) {
-    chart.innerHTML = `<div class="muted">هنوز داده‌ای برای رسم نمودار وجود ندارد.</div>`;
-    return;
-  }
-
-  const max = Math.max(...categories.map(x => Number(x.averagePerGB || 0)), 1);
-
-  chart.innerHTML = categories.map(c => {
-    const value = Number(c.averagePerGB || 0);
-    const h = Math.max((value / max) * 220, value > 0 ? 18 : 4);
-
-    return `
-      <div style="flex:1;text-align:center;min-width:0">
-        <div style="height:${h}px;background:linear-gradient(180deg,#23e2ff,#2f8cff);border-radius:16px 16px 0 0;margin-bottom:10px;box-shadow:0 18px 45px rgba(47,140,255,.22)"></div>
-        <div style="font-weight:900">${value.toLocaleString("fa-IR")} تومان</div>
-        <div style="opacity:.75;font-size:13px;margin-top:6px">${c.title}</div>
-      </div>
-    `;
+  const services = data.stats.services || [];
+  const max = Math.max(...services.map(x => Number(x.avg || 0)), 1);
+  chart.innerHTML = services.map(s => {
+    const h = Math.max((Number(s.avg || 0) / max) * 230, s.avg ? 18 : 4);
+    return `<div class="barbox">
+      <div class="bar" style="height:${h}px"></div>
+      <div style="font-weight:900">${toman(s.avg)}</div>
+      <div class="muted" style="font-size:13px;margin-top:6px">${s.title}</div>
+    </div>`;
   }).join("");
+}
+
+function renderIndexTable(data) {
+  document.querySelectorAll("[data-index-table]").forEach(el => {
+    const services = data.stats.services || [];
+    el.innerHTML = services.map(s => `
+      <tr>
+        <td><b>${s.title}</b></td>
+        <td>${toman(s.avg)}</td>
+        <td>${toman(s.min)}</td>
+        <td>${toman(s.max)}</td>
+        <td><span class="pill">${s.count}</span></td>
+      </tr>
+    `).join("");
+  });
+}
+
+function renderStats(data) {
+  const get = key => data.stats.services.find(x => x.key === key);
+  const nat = get("national"), tun = get("tunnel"), dir = get("direct");
+  document.querySelectorAll("[data-stat='seller_count']").forEach(e => e.textContent = data.stats.seller_count || 0);
+  document.querySelectorAll("[data-stat='national_range']").forEach(e => e.textContent = nat ? `${toman(nat.min)} تا ${toman(nat.max)}` : "—");
+  document.querySelectorAll("[data-stat='tunnel_range']").forEach(e => e.textContent = tun ? `${toman(tun.min)} تا ${toman(tun.max)}` : "—");
+  document.querySelectorAll("[data-stat='direct_range']").forEach(e => e.textContent = dir ? `${toman(dir.min)} تا ${toman(dir.max)}` : "—");
+}
+
+function renderPublicSellers(data) {
+  document.querySelectorAll("[data-public-sellers]").forEach(el => {
+    if (!data.sellers.length) {
+      el.innerHTML = `<div class="seller-card muted">هنوز فروشنده‌ای ثبت نشده است.</div>`;
+      return;
+    }
+    el.innerHTML = data.sellers.map(s => {
+      const tg = s.telegram ? `<a class="pill" href="https://t.me/${s.telegram.replace("@","")}" target="_blank">${s.telegram}</a>` : `<span class="pill">بدون تلگرام</span>`;
+      const site = s.website ? `<a class="pill" href="${s.website}" target="_blank">وب‌سایت</a>` : "";
+      return `<div class="seller-card">
+        <h3>${s.seller}</h3>
+        <p class="muted">${s.note || "فروشنده مشارکت‌کننده در شاخص بازار"}</p>
+        <div class="actions">${tg}${site}<span class="pill">${s.status}</span></div>
+      </div>`;
+    }).join("");
+  });
+}
+
+function setupFairPrice(data) {
+  const sel = document.getElementById("fairService");
+  const input = document.getElementById("fairPrice");
+  const btn = document.getElementById("checkFair");
+  const out = document.getElementById("fairResult");
+  if (!sel || !input || !btn || !out) return;
+  sel.innerHTML = data.stats.services.map(s => `<option value="${s.key}">${s.title}</option>`).join("");
+  const check = () => {
+    const service = data.stats.services.find(s => s.key === sel.value);
+    const price = Number(input.value || 0);
+    if (!service || !service.avg || !price) {
+      out.className = "compare-result muted";
+      out.textContent = "قیمت و نوع سرویس را وارد کن.";
+      return;
+    }
+    const diff = ((price - service.avg) / service.avg) * 100;
+    const abs = Math.abs(diff).toFixed(1).replace(".", "٫");
+    let text, cls;
+    if (diff > 15) { text = `${abs}٪ بالاتر از میانگین بازار است. احتمالاً گران محسوب می‌شود.`; cls = "compare-result error"; }
+    else if (diff < -15) { text = `${abs}٪ پایین‌تر از میانگین بازار است. ارزان‌تر از شاخص فعلی است.`; cls = "compare-result success"; }
+    else { text = `نزدیک به میانگین بازار است. اختلاف حدود ${abs}٪ است.`; cls = "compare-result"; }
+    out.className = cls;
+    out.textContent = text;
+  };
+  btn.addEventListener("click", check);
+  input.addEventListener("keydown", e => { if (e.key === "Enter") check(); });
 }
 
 async function render() {
   const [data, settings] = await Promise.all([getData(), getSettings()]);
   applySettings(settings);
-  renderCategoryCards(data);
-  renderPrices(data);
-  renderSellers(data);
-  setupCalculator(data);
+  renderMarketCards(data);
   renderMarketChart(data);
+  renderIndexTable(data);
+  renderStats(data);
+  renderPublicSellers(data);
+  setupFairPrice(data);
 }
-
 render();
