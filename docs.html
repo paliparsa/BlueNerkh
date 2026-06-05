@@ -11,4 +11,91 @@ a{color:inherit;text-decoration:none}.wrap{width:min(1180px,calc(100% - 32px));m
 .kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.mini{padding:16px;border-radius:18px;background:rgba(255,255,255,.05);border:1px solid var(--line)}.notice{border:1px solid rgba(255,209,102,.28);background:rgba(255,209,102,.08);padding:16px;border-radius:18px;color:#ffe7a3}.form{display:grid;gap:12px}.input{width:100%;padding:14px 16px;border-radius:16px;border:1px solid var(--line);background:rgba(255,255,255,.06);color:white}.input option{color:#00162b}.footer{margin-top:54px;padding:30px 0;border-top:1px solid var(--line);color:var(--muted)}.calc{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}.result{font-size:34px;font-weight:1000}.terminal{direction:ltr;text-align:left;font-family:ui-monospace,Menlo,Consolas,monospace;min-height:320px}.dot{width:12px;height:12px;border-radius:50%;display:inline-block;background:var(--red);box-shadow:20px 0 var(--yellow),40px 0 var(--green)}.line{height:1px;background:var(--line);margin:18px -22px}
 .chart{display:flex;align-items:end;gap:20px;height:280px;padding:24px 0 0}.barbox{flex:1;text-align:center;min-width:0}.bar{border-radius:16px 16px 0 0;background:linear-gradient(180deg,#23e2ff,#2f8cff);box-shadow:0 18px 45px rgba(47,140,255,.22);margin-bottom:10px}.compare-result{padding:18px;border-radius:18px;background:rgba(255,255,255,.055);border:1px solid var(--line);margin-top:14px}.success{color:#9fffd8}.error{color:#ffb3c0}.adminbar{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end}.admin-grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:18px;align-items:start}.checkrow{display:flex;align-items:center;gap:8px;color:var(--muted)}.admin-actions{display:flex;gap:8px;flex-wrap:wrap}.smallbtn{padding:8px 10px;border-radius:12px;font-size:13px}.seller-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.seller-card{padding:20px;border-radius:20px;border:1px solid var(--line);background:rgba(255,255,255,.055)}
 @media(max-width:850px){.grid,.cards,.kpi,.calc,.adminbar,.admin-grid,.seller-cards{grid-template-columns:1fr}.links{display:none}.hero{padding-top:34px}.h1{font-size:38px}.table{font-size:13px}.table td,.table th{padding:10px}.navin{padding:12px 0;align-items:flex-start}.brand small{font-size:11px}.wrap{width:min(100% - 20px,1180px)}.chart{gap:10px}.price{font-size:32px}}
-</style></head><body><nav class="nav"><div class="wrap navin"><a class="brand" href="index.html"><span class="logo">BN</span><span>BlueNerkh<small>شاخص بازار VPN</small></span></a><div class="links"><a class="" href="index.html">خانه</a><a class="" href="prices.html">شاخص بازار</a><a class="" href="sellers.html">فروشندگان مشارکت‌کننده</a><a class="active" href="docs.html">مستندات</a><a class="" href="about.html">درباره</a><a class="" href="contact.html">تماس</a><a class="" href="terms.html">قوانین</a></div><a class="btn ghost" href="prices.html">مشاهده شاخص</a></div></nav><main><section class='hero'><div class='wrap'><h1 class='h1'>روش محاسبه شاخص</h1><p class='lead'>میانگین بازار از قیمت‌های ثبت‌شده در پنل ادمین محاسبه می‌شود. قیمت‌های دقیق فروشنده‌ها در خروجی عمومی نمایش داده نمی‌شوند.</p></div></section></main><footer class="footer"><div class="wrap" data-setting="footer_text">BlueNerkh فروشنده نیست؛ مرجع شاخص و تحلیل بازار VPN است.</div></footer><script src="js/config.js"></script><script src="js/app.js"></script></body></html>
+</style></head><body><nav class="nav"><div class="wrap navin"><a class="brand" href="index.html"><span class="logo">BN</span><span>BlueNerkh<small>شاخص بازار VPN</small></span></a><div class="links"><a class="" href="index.html">خانه</a><a class="" href="prices.html">شاخص بازار</a><a class="" href="sellers.html">فروشندگان مشارکت‌کننده</a><a class="active" href="docs.html">مستندات</a><a class="" href="about.html">درباره</a><a class="" href="contact.html">تماس</a><a class="" href="terms.html">قوانین</a></div><a class="btn ghost" href="prices.html">مشاهده شاخص</a></div></nav><main><section class='hero'><div class='wrap'><h1 class='h1'>روش محاسبه شاخص</h1><p class='lead'>روش محاسبه شاخص بازار BlueNerkh
+
+BlueNerkh چیست؟
+
+BlueNerkh یک فروشگاه، ارائه‌دهنده سرویس VPN یا واسطه فروش نیست.
+
+هدف این پروژه افزایش شفافیت بازار و کمک به کاربران برای درک وضعیت واقعی قیمت‌ها است. به همین دلیل، قیمت دقیق فروشندگان به‌صورت عمومی نمایش داده نمی‌شود و فقط شاخص‌های کلی بازار در اختیار کاربران قرار می‌گیرد.
+
+---
+
+داده‌ها از کجا تأمین می‌شوند؟
+
+داده‌های مورد استفاده در BlueNerkh توسط فروشندگان مشارکت‌کننده ثبت و بروزرسانی می‌شوند.
+
+هر فروشنده می‌تواند قیمت سرویس‌های خود را در دسته‌های مختلف ثبت کند:
+
+- سرویس مستقیم
+- سرویس تانل
+- سرویس نت ملی
+
+این اطلاعات پس از ثبت، برای محاسبه شاخص بازار مورد استفاده قرار می‌گیرند.
+
+---
+
+چرا قیمت دقیق فروشندگان نمایش داده نمی‌شود؟
+
+هدف BlueNerkh ایجاد رقابت ناسالم یا معرفی ارزان‌ترین فروشنده نیست.
+
+نمایش عمومی قیمت هر فروشنده معمولاً باعث:
+
+- جنگ قیمتی
+- ثبت قیمت‌های غیرواقعی
+- کاهش کیفیت خدمات
+- ناپایداری بازار
+
+می‌شود.
+
+به همین دلیل، BlueNerkh تنها میانگین‌ها و شاخص‌های کلی بازار را نمایش می‌دهد.
+
+---
+
+شاخص بازار چگونه محاسبه می‌شود؟
+
+برای هر دسته سرویس، قیمت‌های ثبت‌شده فروشندگان جمع‌آوری شده و میانگین بازار محاسبه می‌شود.
+
+علاوه بر میانگین، اطلاعات زیر نیز نمایش داده می‌شود:
+
+- کمترین قیمت ثبت‌شده
+- بیشترین قیمت ثبت‌شده
+- تعداد داده‌های مورد استفاده
+- روند تغییرات بازار در طول زمان
+
+---
+
+وضعیت بازار چیست؟
+
+وضعیت بازار از مقایسه قیمت فعلی با میانگین تاریخی محاسبه می‌شود.
+
+سه وضعیت ممکن وجود دارد:
+
+🟢 ارزان
+قیمت فعلی به شکل محسوسی پایین‌تر از میانگین تاریخی است.
+
+🟡 متعادل
+قیمت فعلی در محدوده طبیعی بازار قرار دارد.
+
+🔴 گران
+قیمت فعلی به شکل محسوسی بالاتر از میانگین تاریخی است.
+
+---
+
+ابزار بررسی منصفانه بودن قیمت
+
+کاربران می‌توانند قیمت پیشنهادی دریافتی از فروشندگان را وارد کرده و آن را با شاخص فعلی بازار مقایسه کنند.
+
+این ابزار صرفاً برای آگاهی بیشتر کاربران طراحی شده و به منزله تأیید یا رد هیچ فروشنده‌ای نیست.
+
+---
+
+مسئولیت استفاده از اطلاعات
+
+BlueNerkh هیچ‌گونه مسئولیتی در قبال خرید، فروش، کیفیت سرویس‌ها یا توافقات بین کاربران و فروشندگان ندارد.
+
+تمام اطلاعات صرفاً با هدف شفافیت بیشتر بازار و افزایش آگاهی کاربران منتشر می‌شوند.
+
+---
+
+آخرین بروزرسانی مستندات: 2026</p></div></section></main><footer class="footer"><div class="wrap" data-setting="footer_text">BlueNerkh فروشنده نیست؛ مرجع شاخص و تحلیل بازار VPN است.</div></footer><script src="js/config.js"></script><script src="js/app.js"></script></body></html>
